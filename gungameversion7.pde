@@ -1,16 +1,68 @@
 // DOOM-Style Split-Screen PvP FPS with Texture Mapping
-// Two-player local multiplayer with separate Arduino controls
-// Player 1: WASD + Mouse | Player 2: Arrow Keys + NumPad
-// Space/Enter to shoot
+// Two-player local multiplayer with keyboard or Arduino controller support
+//
+// KEYBOARD CONTROLS:
+// Player 1: WASD + SPACE to shoot + Q to reload
+// Player 2: Arrow Keys + ENTER to shoot + / to reload
+//
+// ARDUINO CONTROLLER SETUP:
+// Each controller needs:
+// - 1x Analog Joystick (4-pin: VCC, GND, X, Y)
+// - 2x Push Buttons (Fire and Reload)
+//
+// Arduino Sketch Example:
+// -------------------------
+// const int JOY_X = A0;
+// const int JOY_Y = A1;
+// const int BTN_FIRE = 2;
+// const int BTN_RELOAD = 3;
+//
+// void setup() {
+//   Serial.begin(9600);
+//   pinMode(BTN_FIRE, INPUT_PULLUP);
+//   pinMode(BTN_RELOAD, INPUT_PULLUP);
+// }
+//
+// void loop() {
+//   int joyX = analogRead(JOY_X);
+//   int joyY = analogRead(JOY_Y);
+//   int fire = !digitalRead(BTN_FIRE);     // Inverted because of INPUT_PULLUP
+//   int reload = !digitalRead(BTN_RELOAD); // Inverted because of INPUT_PULLUP
+//
+//   // Send data in format: "joyX,joyY,fire,reload"
+//   Serial.print(joyX);
+//   Serial.print(",");
+//   Serial.print(joyY);
+//   Serial.print(",");
+//   Serial.print(fire);
+//   Serial.print(",");
+//   Serial.println(reload);
+//
+//   delay(50); // Send updates every 50ms
+// }
+// -------------------------
 
 import processing.serial.*;
 import processing.sound.*;
 import java.util.Collections;
 
-// Serial ports for Arduino (uncomment when ready)
-// Serial port1;
-// Serial port2;
-boolean useArduino = false;
+// Serial ports for Arduino
+Serial port1; // Controller for Player 1
+Serial port2; // Controller for Player 2
+boolean useController = false; // true = controller, false = keyboard
+boolean showInputSelect = false; // Show input selection menu
+
+// Controller data storage
+// Format from Arduino: "P1,joyX,joyY,fireBtn,reloadBtn|P2,joyX,joyY,fireBtn,reloadBtn"
+int p1JoyX = 512, p1JoyY = 512; // Center position (0-1023 range)
+boolean p1FireBtn = false, p1ReloadBtn = false;
+int p2JoyX = 512, p2JoyY = 512;
+boolean p2FireBtn = false, p2ReloadBtn = false;
+
+// Joystick dead zone (center range that doesn't register movement)
+int joyDeadZone = 100;
+// Joystick center position
+int joyCenterX = 512, joyCenterY = 512;
 
 // Sound effects
 SoundFile shootSound;
@@ -450,7 +502,12 @@ void draw() {
     }
     return;
   }
-  
+
+  if (showInputSelect) {
+    drawInputSelectScreen();
+    return;
+  }
+
   if (showMapSelect) {
     drawMapSelectScreen();
     return;
@@ -484,12 +541,12 @@ void draw() {
   }
   
   background(0);
-  
-  if (!useArduino) {
-    player1.handleKeyboard(true);
-    player2.handleKeyboard(false);
+
+  // Update controller input if using controllers
+  if (useController) {
+    updateControllerInput();
   }
-  
+
   player1.update();
   player2.update();
   
@@ -1021,6 +1078,41 @@ void drawTitleScreen() {
   text("A Game By Chili James Potmesil", width/2, height - 30);
 }
 
+void drawInputSelectScreen() {
+  background(20, 20, 40);
+
+  // Title
+  fill(100, 200, 255);
+  textAlign(CENTER, CENTER);
+  textSize(60);
+  text("SELECT INPUT METHOD", width/2, height/4);
+
+  // Keyboard option
+  fill(200, 200, 200);
+  textSize(40);
+  text("Press 'K' for KEYBOARD", width/2, height/2 - 60);
+
+  fill(150, 150, 150);
+  textSize(20);
+  text("Player 1: WASD + SPACE + Q", width/2, height/2 - 20);
+  text("Player 2: ARROWS + ENTER + /", width/2, height/2 + 10);
+
+  // Controller option
+  fill(200, 200, 200);
+  textSize(40);
+  text("Press 'C' for CONTROLLER", width/2, height/2 + 100);
+
+  fill(150, 150, 150);
+  textSize(20);
+  text("Two Arduino controllers with joysticks and buttons", width/2, height/2 + 140);
+  text("Make sure controllers are connected before selecting", width/2, height/2 + 170);
+
+  // Instruction
+  fill(255, 255, 0, 150 + sin(frameCount * 0.1) * 105);
+  textSize(30);
+  text("CHOOSE YOUR INPUT METHOD", width/2, 3*height/4 + 40);
+}
+
 void loadSounds() {
   println("=== LOADING SOUND EFFECTS ===");
   try {
@@ -1220,6 +1312,149 @@ SoundFile loadSoundSafe(String filename) {
     } catch (Exception e) {}
   }
   return null;
+}
+
+void initializeControllers() {
+  println("=== INITIALIZING ARDUINO CONTROLLERS ===");
+  try {
+    // List available serial ports
+    println("Available serial ports:");
+    String[] ports = Serial.list();
+    for (int i = 0; i < ports.length; i++) {
+      println("[" + i + "] " + ports[i]);
+    }
+
+    if (ports.length < 2) {
+      println("ERROR: Need at least 2 serial ports for controllers");
+      println("Falling back to keyboard mode");
+      useController = false;
+      return;
+    }
+
+    // Initialize serial ports (adjust port indices as needed)
+    // You may need to change these indices to match your Arduino connections
+    port1 = new Serial(this, ports[0], 9600);
+    port2 = new Serial(this, ports[1], 9600);
+
+    port1.bufferUntil('\n');
+    port2.bufferUntil('\n');
+
+    println("Controller 1 connected on " + ports[0]);
+    println("Controller 2 connected on " + ports[1]);
+    println("=== CONTROLLERS INITIALIZED ===");
+  } catch (Exception e) {
+    println("ERROR initializing controllers: " + e.getMessage());
+    println("Falling back to keyboard mode");
+    useController = false;
+  }
+}
+
+void serialEvent(Serial port) {
+  if (!useController) return;
+
+  try {
+    String data = port.readStringUntil('\n');
+    if (data != null) {
+      data = trim(data);
+      parseControllerData(data, port);
+    }
+  } catch (Exception e) {
+    println("Error reading serial data: " + e.getMessage());
+  }
+}
+
+void parseControllerData(String data, Serial port) {
+  // Expected format: "joyX,joyY,fireBtn,reloadBtn"
+  // Example: "512,480,0,1" means joystick at (512, 480), fire not pressed, reload pressed
+
+  String[] values = split(data, ',');
+  if (values.length != 4) return;
+
+  try {
+    int joyX = int(values[0]);
+    int joyY = int(values[1]);
+    int fire = int(values[2]);
+    int reload = int(values[3]);
+
+    // Determine which player this data is for
+    if (port == port1) {
+      p1JoyX = joyX;
+      p1JoyY = joyY;
+      p1FireBtn = (fire == 1);
+      p1ReloadBtn = (reload == 1);
+    } else if (port == port2) {
+      p2JoyX = joyX;
+      p2JoyY = joyY;
+      p2FireBtn = (fire == 1);
+      p2ReloadBtn = (reload == 1);
+    }
+  } catch (Exception e) {
+    println("Error parsing controller data: " + e.getMessage());
+  }
+}
+
+void updateControllerInput() {
+  if (!useController) return;
+
+  // Update Player 1 from controller 1
+  updatePlayerFromController(player1, p1JoyX, p1JoyY, p1FireBtn, p1ReloadBtn);
+
+  // Update Player 2 from controller 2
+  updatePlayerFromController(player2, p2JoyX, p2JoyY, p2FireBtn, p2ReloadBtn);
+}
+
+void updatePlayerFromController(Player p, int joyX, int joyY, boolean fireBtn, boolean reloadBtn) {
+  // Handle joystick X-axis for turning (left/right)
+  int deltaX = joyX - joyCenterX;
+  if (abs(deltaX) > joyDeadZone) {
+    // Map joystick to turning speed
+    // Positive = turn right, Negative = turn left
+    float turnAmount = map(abs(deltaX), joyDeadZone, 512, 0, p.turnSpeed);
+    if (deltaX > 0) {
+      p.dKey = true;
+      p.aKey = false;
+    } else {
+      p.aKey = true;
+      p.dKey = false;
+    }
+  } else {
+    p.aKey = false;
+    p.dKey = false;
+  }
+
+  // Handle joystick Y-axis for movement (forward/backward)
+  int deltaY = joyY - joyCenterY;
+  if (abs(deltaY) > joyDeadZone) {
+    // Map joystick to movement
+    // Note: Y-axis might be inverted depending on joystick orientation
+    // Adjust the comparison if needed
+    if (deltaY < 0) { // Forward
+      p.wKey = true;
+      p.sKey = false;
+    } else { // Backward
+      p.sKey = true;
+      p.wKey = false;
+    }
+  } else {
+    p.wKey = false;
+    p.sKey = false;
+  }
+
+  // Handle fire button
+  if (fireBtn && !p.fireKeyHeld) {
+    p.fireKeyHeld = true;
+    p.shoot();
+  } else if (!fireBtn) {
+    p.fireKeyHeld = false;
+  }
+
+  // Handle reload button (only trigger on button press, not hold)
+  if (reloadBtn && !p.reloadBtnPressed) {
+    p.reloadBtnPressed = true;
+    p.startReload();
+  } else if (!reloadBtn) {
+    p.reloadBtnPressed = false;
+  }
 }
 
 void loadTextures() {
@@ -3942,7 +4177,21 @@ boolean checkCollisionWithRadius(float x, float y, float radius) {
 void keyPressed() {
   if (!gameStarted) {
     gameStarted = true;
-    showMapSelect = true;
+    showInputSelect = true; // Show input selection menu first
+    return;
+  }
+  if (showInputSelect) {
+    if (key == 'k' || key == 'K') {
+      useController = false;
+      showInputSelect = false;
+      showMapSelect = true;
+    }
+    if (key == 'c' || key == 'C') {
+      useController = true;
+      initializeControllers();
+      showInputSelect = false;
+      showMapSelect = true;
+    }
     return;
   }
   if (showMapSelect) {
@@ -3977,6 +4226,7 @@ void keyPressed() {
       gameEnded = false;
       winner = null;
       gameStarted = false;
+      showInputSelect = false;
       showMapSelect = false;
       showKillSelect = false;
       gameTrackStarted = false;
@@ -4055,6 +4305,7 @@ class Player {
   String name;
   boolean wKey, aKey, sKey, dKey;
   boolean fireKeyHeld = false;
+  boolean reloadBtnPressed = false; // For controller reload button tracking
   int lastShot = 0;
   int lastActualShot = 0; // Tracks when an actual bullet was fired (not empty click)
   int shotCooldown = 300;
