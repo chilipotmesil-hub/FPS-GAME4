@@ -2513,11 +2513,11 @@ PImage createDesertSkyboxTexture() {
   PImage sky = createImage(w, h, RGB);
   sky.loadPixels();
 
-  // Create base sky gradient
+  // Create base sky gradient - blend from blue at top to sandy desert color at bottom
   for (int y = 0; y < h; y++) {
     float t = (float)y / h;
-    int topR = 135, topG = 206, topB = 235; // Sky blue
-    int botR = 200, botG = 220, botB = 255; // Light blue
+    int topR = 135, topG = 206, topB = 235; // Sky blue at top
+    int botR = 210, botG = 180, botB = 120; // Sandy desert color at bottom (matches floor)
     int r = int(lerp(topR, botR, t));
     int g = int(lerp(topG, botG, t));
     int b = int(lerp(topB, botB, t));
@@ -2541,14 +2541,14 @@ PImage createDesertSkyboxTexture() {
     int mountainTop = h - int(mountainHeight) - 30;
 
     for (int y = mountainTop; y < h; y++) {
-      // Gradient from lighter (distant) to match desert floor at base
-      float depth = (float)(y - mountainTop) / (h - mountainTop);
+      // Gradient from slightly lighter to sandy desert floor color at base
+      float depth = (float)(y - mountainTop) / max(1, (h - mountainTop));
       float n = noise(x * 0.015, y * 0.015);
 
-      // Sandy desert mountains matching desert floor color (210, 180, 120)
-      int r = int(lerp(180, 210, depth) + n * 20);
-      int g = int(lerp(150, 180, depth) + n * 15);
-      int b = int(lerp(110, 120, depth) + n * 10);
+      // Sandy desert mountains blending to desert floor color (210, 180, 120)
+      int r = int(lerp(190, 210, depth) + n * 15);
+      int g = int(lerp(165, 180, depth) + n * 12);
+      int b = int(lerp(115, 120, depth) + n * 8);
 
       sky.pixels[y * w + x] = color(r, g, b);
     }
@@ -2975,6 +2975,9 @@ void renderPlayer(Player p, int startX, int startY, int w, int h) {
       for (int y = 0; y < wallHeight; y++) {
         int texY = int(map(y, 0, wallHeight, 0, texSize)) % texSize;
         color c = tex.pixels[texY * texSize + texX];
+
+        // Skip rendering if pixel is transparent (alpha < 10)
+        if (alpha(c) < 10) continue;
 
         fill(red(c) * brightness, green(c) * brightness, blue(c) * brightness);
         noStroke();
@@ -3771,8 +3774,8 @@ void drawMushroomCloud(Player viewer, int w, int h) {
       return; // Sprite would extend outside viewport
     }
 
-    // Position mushroom cloud on horizon just above crosshair (at h/2)
-    float horizonY = h / 2 - spriteHeight * 0.55;
+    // Position mushroom cloud on horizon at crosshair level (at h/2)
+    float horizonY = h / 2 - spriteHeight * 0.50;
 
     // Slightly faded atmospheric appearance
     float brightness = 0.75;
