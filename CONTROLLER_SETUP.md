@@ -1,37 +1,43 @@
-# Arduino Controller Setup Guide
+# Arduino Controller Setup Guide - 5-Pin Joystick Version
 
-This guide explains how to set up Arduino-based controllers for the two-player split-screen FPS game.
+This guide explains how to set up Arduino-based controllers with 5-pin joysticks for the two-player split-screen FPS game.
 
 ## Hardware Requirements
 
 For each controller (2 total):
 - 1x Arduino board (Uno, Nano, Leonardo, or compatible)
-- 1x Analog Joystick Module (4-pin with VCC, GND, X, Y)
-- 2x Push Buttons (for Fire and Reload actions)
-- Optional: 2x 10kΩ resistors for buttons (if not using INPUT_PULLUP)
+- 1x Analog Joystick Module (5-pin with VCC, GND, X, Y, SW)
+- 1x Push Button (for Reload action)
+- Optional: 1x 10kΩ resistor for reload button (if not using INPUT_PULLUP)
 - USB cable to connect Arduino to computer
+
+## 5-Pin Joystick Pinout
+
+The 5-pin joystick includes:
+- **VCC** - Power (5V)
+- **GND** - Ground
+- **X** - X-axis analog output (0-1023)
+- **Y** - Y-axis analog output (0-1023)
+- **SW** - Built-in button (press down on joystick to activate)
 
 ## Wiring Diagram
 
 ### Controller Wiring (for each Arduino):
 
 ```
-Joystick Module:
+5-Pin Joystick Module:
   VCC  -> Arduino 5V
   GND  -> Arduino GND
   X    -> Arduino A0 (Analog Pin 0)
   Y    -> Arduino A1 (Analog Pin 1)
+  SW   -> Arduino Pin 2 (FIRE - press joystick down to shoot!)
 
-Fire Button:
-  One side -> Arduino Pin 2
-  Other side -> GND
-
-Reload Button:
+External Reload Button:
   One side -> Arduino Pin 3
   Other side -> GND
 ```
 
-**Note:** We use INPUT_PULLUP mode, so buttons connect to GND when pressed.
+**Note:** We use INPUT_PULLUP mode, so the reload button connects to GND when pressed. The joystick SW pin also uses INPUT_PULLUP.
 
 ## Arduino Setup Steps
 
@@ -148,21 +154,29 @@ int joyCenterY = 512;      // Adjust if joystick center is off
 ### Controller Mode (C):
 - **Both Players:**
   - Joystick: Move and turn
-  - Fire Button: Shoot
-  - Reload Button: Reload weapon
+  - Press Joystick Down (SW button): Shoot 🔫
+  - External Button: Reload weapon 🔄
 
 ## Advanced: Custom Pin Assignments
 
 To use different pins, modify the Arduino sketch:
 
 ```cpp
-const int JOY_X = A0;      // Change to your X-axis pin
-const int JOY_Y = A1;      // Change to your Y-axis pin
-const int BTN_FIRE = 2;    // Change to your fire button pin
-const int BTN_RELOAD = 3;  // Change to your reload button pin
+const int JOY_X = A0;        // Change to your X-axis pin
+const int JOY_Y = A1;        // Change to your Y-axis pin
+const int JOY_SW = 2;        // Change to your joystick button pin (fire)
+const int BTN_RELOAD = 3;    // Change to your reload button pin
 ```
 
 Then re-upload the sketch to your Arduinos.
+
+## Why 5-Pin Joystick?
+
+The 5-pin joystick's built-in button (SW) provides a more intuitive firing mechanism:
+- **Press down on the joystick to shoot** - feels natural and responsive
+- **Reduces button count** - only need 1 external button instead of 2
+- **Better ergonomics** - thumb naturally rests on joystick for firing
+- **Arcade-style feel** - similar to classic arcade stick button layout
 
 ---
 

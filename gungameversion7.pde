@@ -5,29 +5,31 @@
 // Player 1: WASD + SPACE to shoot + Q to reload
 // Player 2: Arrow Keys + ENTER to shoot + / to reload
 //
-// ARDUINO CONTROLLER SETUP:
+// ARDUINO CONTROLLER SETUP (5-PIN JOYSTICK):
 // Each controller needs:
-// - 1x Analog Joystick (4-pin: VCC, GND, X, Y)
-// - 2x Push Buttons (Fire and Reload)
+// - 1x Analog Joystick (5-pin: VCC, GND, X, Y, SW)
+// - 1x Push Button (Reload)
+//
+// The 5-pin joystick has a built-in button (SW) - press down on the stick to FIRE!
 //
 // Arduino Sketch Example:
 // -------------------------
-// const int JOY_X = A0;
-// const int JOY_Y = A1;
-// const int BTN_FIRE = 2;
-// const int BTN_RELOAD = 3;
+// const int JOY_X = A0;        // X-axis
+// const int JOY_Y = A1;        // Y-axis
+// const int JOY_SW = 2;        // Joystick button (press down to fire)
+// const int BTN_RELOAD = 3;    // External reload button
 //
 // void setup() {
 //   Serial.begin(9600);
-//   pinMode(BTN_FIRE, INPUT_PULLUP);
-//   pinMode(BTN_RELOAD, INPUT_PULLUP);
+//   pinMode(JOY_SW, INPUT_PULLUP);      // Joystick button
+//   pinMode(BTN_RELOAD, INPUT_PULLUP);  // Reload button
 // }
 //
 // void loop() {
 //   int joyX = analogRead(JOY_X);
 //   int joyY = analogRead(JOY_Y);
-//   int fire = !digitalRead(BTN_FIRE);     // Inverted because of INPUT_PULLUP
-//   int reload = !digitalRead(BTN_RELOAD); // Inverted because of INPUT_PULLUP
+//   int fire = !digitalRead(JOY_SW);       // Press joystick down to fire
+//   int reload = !digitalRead(BTN_RELOAD); // External button
 //
 //   // Send data in format: "joyX,joyY,fire,reload"
 //   Serial.print(joyX);
