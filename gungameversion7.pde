@@ -2470,8 +2470,8 @@ PImage createDesertSandTexture(int texSize) {
 }
 
 PImage createDesertRockTexture(int texSize) {
-  // Sandy rock/sandstone texture for out-of-bounds walls
-  PImage tex = createImage(texSize, texSize, RGB);
+  // Sandy rock/sandstone texture for out-of-bounds walls (transparent)
+  PImage tex = createImage(texSize, texSize, ARGB);
   tex.loadPixels();
   for (int y = 0; y < texSize; y++) {
     for (int x = 0; x < texSize; x++) {
@@ -2479,7 +2479,7 @@ PImage createDesertRockTexture(int texSize) {
       int r = int(180 * noise);
       int g = int(150 * noise);
       int b = int(110 * noise);
-      tex.pixels[y * texSize + x] = color(r, g, b);
+      tex.pixels[y * texSize + x] = color(r, g, b, 0); // Alpha = 0 (fully transparent)
     }
   }
   tex.updatePixels();
@@ -2487,8 +2487,8 @@ PImage createDesertRockTexture(int texSize) {
 }
 
 PImage createDesertBorderTexture(int texSize) {
-  // Slightly darker sand for distant border
-  PImage tex = createImage(texSize, texSize, RGB);
+  // Slightly darker sand for distant border (transparent)
+  PImage tex = createImage(texSize, texSize, ARGB);
   tex.loadPixels();
   for (int y = 0; y < texSize; y++) {
     for (int x = 0; x < texSize; x++) {
@@ -2496,7 +2496,7 @@ PImage createDesertBorderTexture(int texSize) {
       int r = int(190 * noise);
       int g = int(160 * noise);
       int b = int(100 * noise);
-      tex.pixels[y * texSize + x] = color(r, g, b);
+      tex.pixels[y * texSize + x] = color(r, g, b, 0); // Alpha = 0 (fully transparent)
     }
   }
   tex.updatePixels();
@@ -2541,14 +2541,14 @@ PImage createDesertSkyboxTexture() {
     int mountainTop = h - int(mountainHeight) - 30;
 
     for (int y = mountainTop; y < h; y++) {
-      // Gradient from lighter (distant) to darker at base
+      // Gradient from lighter (distant) to match desert floor at base
       float depth = (float)(y - mountainTop) / (h - mountainTop);
       float n = noise(x * 0.015, y * 0.015);
 
-      // Brown/tan desert mountains with atmospheric haze
-      int r = int(lerp(140, 100, depth) + n * 20);
-      int g = int(lerp(120, 80, depth) + n * 15);
-      int b = int(lerp(100, 60, depth) + n * 10);
+      // Sandy desert mountains matching desert floor color (210, 180, 120)
+      int r = int(lerp(180, 210, depth) + n * 20);
+      int g = int(lerp(150, 180, depth) + n * 15);
+      int b = int(lerp(110, 120, depth) + n * 10);
 
       sky.pixels[y * w + x] = color(r, g, b);
     }
@@ -3771,8 +3771,8 @@ void drawMushroomCloud(Player viewer, int w, int h) {
       return; // Sprite would extend outside viewport
     }
 
-    // Position mushroom cloud on horizon line (moved up slightly)
-    float horizonY = h / 2 - spriteHeight / 2 - spriteHeight * 0.1;
+    // Position mushroom cloud on horizon just above crosshair (at h/2)
+    float horizonY = h / 2 - spriteHeight * 0.55;
 
     // Slightly faded atmospheric appearance
     float brightness = 0.75;
