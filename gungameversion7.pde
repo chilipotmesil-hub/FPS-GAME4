@@ -2944,7 +2944,7 @@ void renderPlayer(Player p, int startX, int startY, int w, int h) {
     noStroke();
     rect(0, h/2, w, h/2);
   } else if (currentMapIndex == 3) {
-    fill(105, 90, 60); // Darker sandy desert color for desert map (matches darkened floor)
+    fill(120 * 0.5, 100 * 0.5, 60 * 0.5); // Desert sand (darkened)
     noStroke();
     rect(0, h/2, w, h/2);
   }
