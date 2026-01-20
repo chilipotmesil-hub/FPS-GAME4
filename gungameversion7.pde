@@ -2938,9 +2938,13 @@ void renderPlayer(Player p, int startX, int startY, int w, int h) {
     rect(0, 0, w, h/2);
   }
 
-  // Fill bottom half with base color (ocean for beach, will be covered by floor textures)
+  // Fill bottom half with base color (ocean for beach, sand for desert, will be covered by floor textures)
   if (currentMapIndex == 2) {
     fill(30, 120, 180); // Ocean blue for beach map
+    noStroke();
+    rect(0, h/2, w, h/2);
+  } else if (currentMapIndex == 3) {
+    fill(210, 180, 120); // Sandy desert color for desert map
     noStroke();
     rect(0, h/2, w, h/2);
   }
