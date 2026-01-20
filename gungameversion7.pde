@@ -7,29 +7,27 @@
 //
 // ARDUINO CONTROLLER SETUP (5-PIN JOYSTICK):
 // Each controller needs:
-// - 1x Analog Joystick (5-pin: VCC, GND, X, Y, SW)
-// - 1x Push Button (Reload)
-//
-// The 5-pin joystick has a built-in button (SW) - press down on the stick to FIRE!
+// - 1x Analog Joystick (5-pin: VCC, GND, X, Y, SW - SW not used)
+// - 2x Push Buttons (Fire and Reload)
 //
 // Arduino Sketch Example:
 // -------------------------
 // const int JOY_X = A0;        // X-axis
 // const int JOY_Y = A1;        // Y-axis
-// const int JOY_SW = 2;        // Joystick button (press down to fire)
-// const int BTN_RELOAD = 3;    // External reload button
+// const int BTN_FIRE = 2;      // Fire button (external)
+// const int BTN_RELOAD = 3;    // Reload button (external)
 //
 // void setup() {
 //   Serial.begin(9600);
-//   pinMode(JOY_SW, INPUT_PULLUP);      // Joystick button
-//   pinMode(BTN_RELOAD, INPUT_PULLUP);  // Reload button
+//   pinMode(BTN_FIRE, INPUT_PULLUP);      // Fire button
+//   pinMode(BTN_RELOAD, INPUT_PULLUP);    // Reload button
 // }
 //
 // void loop() {
 //   int joyX = analogRead(JOY_X);
 //   int joyY = analogRead(JOY_Y);
-//   int fire = !digitalRead(JOY_SW);       // Press joystick down to fire
-//   int reload = !digitalRead(BTN_RELOAD); // External button
+//   int fire = !digitalRead(BTN_FIRE);     // External fire button
+//   int reload = !digitalRead(BTN_RELOAD); // External reload button
 //
 //   // Send data in format: "joyX,joyY,fire,reload"
 //   Serial.print(joyX);
