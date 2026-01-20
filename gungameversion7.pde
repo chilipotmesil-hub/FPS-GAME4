@@ -3285,9 +3285,8 @@ void renderPlayer(Player p, int startX, int startY, int w, int h) {
     spritesToRender.add(new SpriteDepth(distance, "blood", bp));
   }
 
-  // Add bullets (only owner's bullets)
+  // Add bullets (all bullets visible to both players)
   for (Bullet b : bullets) {
-    if (b.owner != p) continue;
     float dx = b.x - p.x;
     float dy = b.y - p.y;
     float distance = sqrt(dx*dx + dy*dy);
@@ -4530,7 +4529,7 @@ class Player {
 
 class Bullet {
   float x, y, angle;
-  float speed = 15;
+  float speed = 18.75; // Increased by 25% (was 15)
   float maxDist = 500;
   float traveled = 0;
   boolean dead = false;
